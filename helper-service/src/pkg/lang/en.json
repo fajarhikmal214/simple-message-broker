@@ -1,0 +1,7 @@
+{
+    "validation.any.required": "Field {{ attribute }} is required.",
+
+    "common.file.not.found": "File {{ attribute }} not found.",
+    
+    "external.pdf.service.error": "Generate Footer PDF Service is down. Please try again in a few moments."
+}

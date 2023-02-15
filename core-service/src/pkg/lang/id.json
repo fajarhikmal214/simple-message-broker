@@ -1,0 +1,7 @@
+{
+    "validation.any.required": "Isian {{ attribute }} wajib diisi.",
+
+    "common.file.not.found": "File {{ attribute }} tidak ditemukan.",
+
+    "external.pdf.service.error": "Layanan Generate Footer PDF sedang down. Silakan coba lagi dalam beberapa saat."
+}
