@@ -14,13 +14,18 @@ class Example {
     ) {
         const usecase = new Usecase(config, logger)
 
+        usecase.SubscribeDoingThingsStepOne()
+
         this.loadHttp(usecase)
     }
 
     private loadHttp(usecase: Usecase) {
         const handler = new Handler(usecase, this.logger)
 
-        this.http.app.get('/v1/test', handler.Test())
+        this.http.app.get(
+            '/v1/publish-doing-things-step-two',
+            handler.PublishDoingThingsStepTwo()
+        )
     }
 }
 

@@ -6,10 +6,10 @@ import statusCode from '../../../../pkg/statusCode'
 class Handler {
     constructor(private usecase: Usecase, private logger: winston.Logger) {}
 
-    public Test() {
+    public PublishDoingThingsStepTwo() {
         return async (req: Request, res: Response, next: NextFunction) => {
             try {
-                await this.usecase.Test()
+                await this.usecase.PublishDoingThingsStepTwo()
 
                 res.status(statusCode.OK).json('OK')
             } catch (error) {
