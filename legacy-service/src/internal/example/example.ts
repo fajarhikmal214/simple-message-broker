@@ -14,13 +14,13 @@ class Example {
     ) {
         const usecase = new Usecase(config, logger, nats)
 
+        usecase.ReplyIsOddOrEven()
+
         this.loadHttp(usecase)
     }
 
     private loadHttp(usecase: Usecase) {
         const handler = new Handler(usecase, this.logger)
-
-        this.http.app.get('/v1/test', handler.Test())
     }
 }
 

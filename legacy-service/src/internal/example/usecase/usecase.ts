@@ -1,5 +1,12 @@
 import { randomInt } from 'crypto'
-import { StringCodec } from 'nats'
+import {
+    connect,
+    ConnectionOptions,
+    StringCodec,
+    Subscription,
+    SubscriptionOptions,
+} from 'nats'
+import { timeout } from 'nats/lib/nats-base-client/util'
 import winston from 'winston'
 import { Config } from '../../../config/config.interface'
 import Nats from '../../../external/nats'
@@ -9,28 +16,42 @@ class Usecase {
         private config: Config,
         private logger: winston.Logger,
         private nats: Nats
-    ) {
-        this.Test()
-        console.log('HAI')
-    }
+    ) {}
 
-    public async Test() {
-        // create a codec
+    public async ReplyIsOddOrEven() {
+        const server: ConnectionOptions = {
+            servers: this.config.nats.url,
+        }
+
+        const natsConnection = await connect(server)
+
+        const queue = 'my-queue'
+        const subscriptionOptions: SubscriptionOptions = {
+            queue,
+        }
+
         const sc = StringCodec()
 
-        const subscription = this.nats.client?.subscribe('is.odd.or.even')
+        const subject = 'is.odd.or.even'
+        const subscription = natsConnection.subscribe(
+            subject,
+            subscriptionOptions
+        )
 
-        ;async (sub: any) => {
-            const subject = sub.getSubject()
+        ;(async (sub: any) => {
             console.log(`listening for ${subject} requests...`)
 
             for await (const m of sub) {
-                const randomNumber = randomInt(10)
-                const isOddOrEven = await this.isOddOrEven(randomNumber)
+                const data = JSON.parse(m.data)
+                const isOddOrEven = await this.isOddOrEven(data.number)
 
-                const reply = m.respond(isOddOrEven)
+                const req = JSON.stringify({
+                    isOddOrEven,
+                })
 
-                if (reply) {
+                const respond = await m.respond(sc.encode(req))
+
+                if (respond) {
                     console.info(`[${subject}] handled #${sub.getProcessed()}`)
                 } else {
                     console.log(
@@ -40,12 +61,15 @@ class Usecase {
             }
 
             console.log(`subscription ${subject} drained.`)
-        }
-        subscription
+        })(subscription)
     }
 
-    public async isOddOrEven(number: number): Promise<boolean> {
-        return number % 2 == 0
+    public async isOddOrEven(number: number): Promise<string> {
+        if (number % 2 == 0) {
+            return 'even'
+        }
+
+        return 'odd'
     }
 }
 
