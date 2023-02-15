@@ -2,6 +2,8 @@
 
 Simple implementation message broker with NATS
 
+![Simple Message Broker](https://user-images.githubusercontent.com/79292118/219108114-473f76aa-371f-4770-90b8-b2eeec5214c0.png)
+
 ## Tech Stacks
 - **TypeScript** - <https://www.typescriptlang.org/>
 - **Node.js** - <https://nodejs.org/>
