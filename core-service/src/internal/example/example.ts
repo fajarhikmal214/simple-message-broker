@@ -14,13 +14,22 @@ class Example {
     ) {
         const usecase = new Usecase(config, logger, nats)
 
+        usecase.SubscribeDoingThingsStepTwo()
+
         this.loadHttp(usecase)
     }
 
     private loadHttp(usecase: Usecase) {
         const handler = new Handler(usecase, this.logger)
 
-        this.http.app.get('/v1/test', handler.Test())
+        this.http.app.get(
+            '/v1/request-is-odd-or-even',
+            handler.RequestIsOddOrEven()
+        )
+        this.http.app.get(
+            '/v1/publish-doing-things-step-one',
+            handler.PublishDoingThingsStepOne()
+        )
     }
 }
 
