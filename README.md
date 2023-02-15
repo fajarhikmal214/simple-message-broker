@@ -42,7 +42,7 @@ $ cp .env.example .env
   $ docker-compose down
   ```
   
-  NB. If `Error: Cannot find module '/app/build/src/main.js'` , try to build (each service) with this command
+  NB. If `Error: Cannot find module '/app/build/src/main.js'` error occurs, try to build (each service) with this command
   ```bash
   $ cd core-service && npm run build
   $ cd helper-service && npm run build
