@@ -1,0 +1,69 @@
+version: '3'
+services:
+  nats:
+    image: nats
+    ports:
+      - "8222:8222"
+    command: "--cluster_name NATS --cluster nats://0.0.0.0:6222 --http_port 8222 "
+    networks:
+      - simple-message-broker-network
+
+  core-service-app:
+    build:
+      context: ./core-service
+      dockerfile: ./docker/Dockerfile
+    container_name: 'core-service-app'
+    image: app-core-service
+    restart: always
+    volumes:
+      - ./core-service:/app
+      - /app/node_modules
+    env_file:
+      - ./core-service/.env
+    environment:
+      - NATS_URL=nats
+    ports:
+      - 3001:3001
+    networks:
+      - simple-message-broker-network
+
+  helper-service-app:
+    build:
+      context: ./helper-service
+      dockerfile: ./docker/Dockerfile
+    container_name: 'helper-service-app'
+    image: app-helper-service
+    restart: always
+    volumes:
+      - ./helper-service:/app
+      - /app/node_modules
+    env_file:
+      - ./helper-service/.env
+    environment:
+      - NATS_URL=nats
+    ports:
+      - 3002:3002
+    networks:
+      - simple-message-broker-network
+
+  legacy-service-app:
+    build:
+      context: ./legacy-service
+      dockerfile: ./docker/Dockerfile
+    container_name: 'legacy-service-app'
+    image: app-legacy-service
+    restart: always
+    volumes:
+      - ./legacy-service:/app
+      - /app/node_modules
+    env_file:
+      - ./legacy-service/.env
+    environment:
+      - NATS_URL=nats
+    ports:
+      - 3003:3003
+    networks:
+      - simple-message-broker-network
+
+networks:
+  simple-message-broker-network:
