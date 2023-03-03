@@ -17,22 +17,27 @@ Simple implementation message broker with NATS
 ```bash
 $ git clone https://github.com/fajarhikmal214/simple-message-broker.git
 $ cd simple-message-broker
-$ cp .env.example .env
 ```
 
-2. Installing Dependencies (each service)
+2. Installing Dependencies (each service, meaning it is necessary to change directory to each service (e.g. `cd core-sevice`)
 ```bash
 # Install node packages
 $ npm install
 ```
 
-3. Copy `.env` from `.env.example` (each service)
+3. Copy `.env` from `.env.example` (each service, meaning it is necessary to change directory to each service (e.g. `cd core-sevice`)
 
 ```bash
 $ cp .env.example .env
 ```
 
 ## How to Run
+
+- Run locally (each service, meaning it is necessary to change directory to each service (e.g. `cd core-sevice`)
+
+  ```bash
+  $ npm run start:dev
+  ```
 
 - Run with docker compose:
 
