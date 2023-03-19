@@ -1,4 +1,12 @@
-import { connect, ConnectionOptions, StringCodec } from 'nats'
+import {
+    AckPolicy,
+    connect,
+    ConnectionOptions,
+    createInbox,
+    nanos,
+    StringCodec,
+} from 'nats'
+import { consumerOpts } from 'nats/lib/nats-base-client/jsconsumeropts'
 import winston from 'winston'
 import { Config } from '../../../config/config.interface'
 
@@ -11,23 +19,69 @@ class Usecase {
                 servers: this.config.nats.url,
             }
 
-            const natsConnection = await connect(server)
+            const nc = await connect(server)
+            const jsm = nc.jetstream()
+
             const sc = StringCodec()
 
-            const subject = 'doing.things.step.one'
-            const subscribe = natsConnection.subscribe(subject)
+            const subjectName = 'doing.things.step.one'
+            const consumerName = 'my-new-consumer'
+
+            const opts = consumerOpts()
+            opts.durable(consumerName)
+            opts.manualAck()
+            opts.startSequence(1)
+
+            const psub = await jsm.pullSubscribe(subjectName, opts)
 
             ;(async () => {
-                console.log(`listening for ${subject} requests...`)
-
-                for await (const m of subscribe) {
+                for await (const m of psub) {
                     console.log(
-                        `[${subscribe.getProcessed()}]: ${sc.decode(m.data)}`
+                        `[${m.seq}] ${
+                            m.redelivered
+                                ? `- redelivery ${m.info.redeliveryCount}`
+                                : sc.decode(m.data)
+                        }`
                     )
-                }
 
-                console.log('subscription closed')
+                    if (m.seq % 2 === 0) {
+                        // m.ack()
+                    }
+                }
             })()
+
+            const fn = () => {
+                console.log('[PULL]')
+                psub.pull({ batch: 1000, expires: 10000 })
+            }
+
+            // do the initial pull
+            fn()
+            // and now schedule a pull every so often
+            const interval = setInterval(fn, 10000) // and repeat every 2s
+
+            // const done = (async () => {
+            //     console.log(`listening for ${subjectName} requests...`)
+
+            //     for await (const m of sub) {
+            //         console.log(`[${m.seq}]: ${sc.decode(m.data)}`)
+            //         m.ack()
+            //     }
+            // })()
+
+            // const subscribe = nc.subscribe(subject)
+
+            // ;(async () => {
+            //     console.log(`listening for ${subject} requests...`)
+
+            //     for await (const m of subscribe) {
+            //         console.log(
+            //             `[${subscribe.getProcessed()}]: ${sc.decode(m.data)}`
+            //         )
+            //     }
+
+            //     console.log('subscription closed')
+            // })()
         } catch (error: any) {
             this.logger.error(error.message)
         }
