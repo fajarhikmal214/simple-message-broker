@@ -1,20 +1,5 @@
 import { randomInt, randomUUID } from 'crypto'
-import nats, {
-    AckPolicy,
-    connect,
-    ConnectionOptions,
-    createInbox,
-    DeliverPolicy,
-    DiscardPolicy,
-    JetStreamClient,
-    JetStreamManager,
-    nanos,
-    RetentionPolicy,
-    StorageType,
-    StreamConfig,
-    StreamInfo,
-    StringCodec,
-} from 'nats'
+import { connect, ConnectionOptions, JSONCodec, StringCodec } from 'nats'
 import winston from 'winston'
 import { Config } from '../../../config/config.interface'
 import Nats from '../../../external/nats'
@@ -57,33 +42,22 @@ class Usecase {
         const jsm = await nc.jetstreamManager()
 
         const streamName = 'my-new-stream'
-        const subjectNames = ['doing.things.step.one']
-        const consumerName = 'my-new-consumer'
+        const subjectNames = ['doing.things.>']
 
         try {
-            // await jsm.streams.delete(streamName)
+            // await jsm.streams.delete('my-new-stream')
 
             const streamInfo = await jsm.streams.add({
                 name: streamName,
                 subjects: subjectNames,
-                retention: RetentionPolicy.Limits,
-                max_consumers: 1,
-                max_msgs: 1000000,
-                max_bytes: 1024 * 1024 * 1024, // 1 GB
-                max_age: 7 * 24 * 60 * 60 * 1000,
+                // max_msgs: 1000000,
+                // max_bytes: 1024 * 1024 * 1024, // 1 GB
+                // max_age: 7 * 24 * 60 * 60 * 1000,
             })
 
             console.log(`Stream created: ${streamInfo.config.name}`)
 
-            // await jsm.consumers.delete(streamName, consumerName)
-
-            const myconsumer = await jsm.consumers.add(streamName, {
-                durable_name: consumerName,
-                ack_policy: AckPolicy.Explicit,
-                ack_wait: nanos(4000),
-            })
-
-            console.log(`Consumer created: ${myconsumer.config.name}`)
+            // consumer will auto-create when subscriber request
         } catch (err) {
             console.error(`${err}`)
         }
@@ -100,7 +74,7 @@ class Usecase {
             const nc = await connect(server)
             const jsm = nc.jetstream()
 
-            const sc = StringCodec()
+            const jc = JSONCodec()
 
             const data = JSON.stringify({
                 message: 'Doing Things Step One',
@@ -109,10 +83,9 @@ class Usecase {
             const subject = 'doing.things.step.one'
             // natsConnection.publish(subject, sc.encode(data))
 
-            const publishMessage = await jsm.publish(subject, sc.encode(data), {
+            const publishMessage = await jsm.publish(subject, jc.encode(data), {
                 msgID: randomUUID(),
             })
-            publishMessage.ack
 
             console.log(publishMessage)
             console.log(`Published to subject ${subject}`)
