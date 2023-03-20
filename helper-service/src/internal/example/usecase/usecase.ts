@@ -1,11 +1,4 @@
-import {
-    AckPolicy,
-    connect,
-    ConnectionOptions,
-    createInbox,
-    nanos,
-    StringCodec,
-} from 'nats'
+import { connect, ConnectionOptions, JSONCodec, StringCodec } from 'nats'
 import { consumerOpts } from 'nats/lib/nats-base-client/jsconsumeropts'
 import winston from 'winston'
 import { Config } from '../../../config/config.interface'
@@ -22,52 +15,33 @@ class Usecase {
             const nc = await connect(server)
             const jsm = nc.jetstream()
 
-            const sc = StringCodec()
+            const jc = JSONCodec()
 
             const subjectName = 'doing.things.step.one'
             const consumerName = 'my-new-consumer'
 
             const opts = consumerOpts()
             opts.durable(consumerName)
+            opts.queue('my-queue')
+            opts.deliverTo('here')
             opts.manualAck()
-            opts.startSequence(1)
+            opts.ackWait(1000)
+            opts.ackExplicit()
+            opts.replayInstantly()
 
-            const psub = await jsm.pullSubscribe(subjectName, opts)
+            const subscribe = await jsm.subscribe(subjectName, opts)
 
-            ;(async () => {
-                for await (const m of psub) {
-                    console.log(
-                        `[${m.seq}] ${
-                            m.redelivered
-                                ? `- redelivery ${m.info.redeliveryCount}`
-                                : sc.decode(m.data)
-                        }`
-                    )
+            for await (const msg of subscribe) {
+                msg.ack()
 
-                    if (m.seq % 2 === 0) {
-                        // m.ack()
-                    }
-                }
-            })()
-
-            const fn = () => {
-                console.log('[PULL]')
-                psub.pull({ batch: 1000, expires: 10000 })
+                const id = msg.headers ? msg.headers.get('Nats-Msg-Id') : null
+                console.log(
+                    `[${id}: SEQUENCE : ${msg.seq}]: ${jc.decode(msg.data)}`
+                )
             }
 
-            // do the initial pull
-            fn()
-            // and now schedule a pull every so often
-            const interval = setInterval(fn, 10000) // and repeat every 2s
-
-            // const done = (async () => {
-            //     console.log(`listening for ${subjectName} requests...`)
-
-            //     for await (const m of sub) {
-            //         console.log(`[${m.seq}]: ${sc.decode(m.data)}`)
-            //         m.ack()
-            //     }
-            // })()
+            subscribe.destroy()
+            console.log('destroyed')
 
             // const subscribe = nc.subscribe(subject)
 
