@@ -12,6 +12,11 @@ Simple implementation message broker with NATS
 
 ## Quick Start
 
+0. Create NATS Instance with docker
+```bash
+docker run --name nats --network nats --rm -d -p 4222:4222 nats -js
+```
+
 1. Clone the project
 
 ```bash
