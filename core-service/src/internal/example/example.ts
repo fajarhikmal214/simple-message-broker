@@ -14,7 +14,8 @@ class Example {
     ) {
         const usecase = new Usecase(config, logger, nats)
 
-        usecase.SubscribeDoingThingsStepTwo()
+        // usecase.SubscribeDoingThingsStepTwo()
+        usecase.setupStream()
 
         this.loadHttp(usecase)
     }

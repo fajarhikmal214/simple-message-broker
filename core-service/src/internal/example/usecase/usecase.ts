@@ -1,6 +1,5 @@
-import { randomInt } from 'crypto'
-import { cpSync } from 'fs'
-import { connect, ConnectionOptions, Empty, StringCodec } from 'nats'
+import { randomInt, randomUUID } from 'crypto'
+import { connect, ConnectionOptions, JSONCodec, StringCodec } from 'nats'
 import winston from 'winston'
 import { Config } from '../../../config/config.interface'
 import Nats from '../../../external/nats'
@@ -34,17 +33,61 @@ class Usecase {
         }
     }
 
+    public async setupStream() {
+        const server: ConnectionOptions = {
+            servers: this.config.nats.url,
+        }
+
+        const nc = await connect(server)
+        const jsm = await nc.jetstreamManager()
+
+        const streamName = 'my-new-stream'
+        const subjectNames = ['doing.things.>']
+
+        try {
+            // await jsm.streams.delete('my-new-stream')
+
+            const streamInfo = await jsm.streams.add({
+                name: streamName,
+                subjects: subjectNames,
+                // max_msgs: 1000000,
+                // max_bytes: 1024 * 1024 * 1024, // 1 GB
+                // max_age: 7 * 24 * 60 * 60 * 1000,
+            })
+
+            console.log(`Stream created: ${streamInfo.config.name}`)
+
+            // consumer will auto-create when subscriber request
+        } catch (err) {
+            console.error(`${err}`)
+        }
+
+        await nc.close()
+    }
+
     public async PublishDoingThingsStepOne() {
         try {
-            const sc = StringCodec()
+            const server: ConnectionOptions = {
+                servers: this.config.nats.url,
+            }
+
+            const nc = await connect(server)
+            const jsm = nc.jetstream()
+
+            const jc = JSONCodec()
 
             const data = JSON.stringify({
                 message: 'Doing Things Step One',
             })
 
             const subject = 'doing.things.step.one'
-            await this.nats.publish(subject, sc.encode(data))
+            // natsConnection.publish(subject, sc.encode(data))
 
+            const publishMessage = await jsm.publish(subject, jc.encode(data), {
+                msgID: randomUUID(),
+            })
+
+            console.log(publishMessage)
             console.log(`Published to subject ${subject}`)
         } catch (error: any) {
             this.logger.error(error.message)
